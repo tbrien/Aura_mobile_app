@@ -50,10 +50,13 @@ import com.wearablesensor.aura.data_sync.DataSyncService;
 import com.wearablesensor.aura.device_pairing.BluetoothDevicePairingService;
 import com.wearablesensor.aura.real_time_data_processor.MetricType;
 import com.wearablesensor.aura.real_time_data_processor.RealTimeDataProcessorService;
-import com.wearablesensor.aura.real_time_data_processor.analyser.TimeSerieAnalyserObserver;
+import com.wearablesensor.aura.real_time_data_processor.TimeSerieEvent;
 import com.wearablesensor.aura.real_time_data_processor.analyser.TimeSerieState;
 
-public class DataCollectorService extends Service implements TimeSerieAnalyserObserver {
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+public class DataCollectorService extends Service {
     private static final String TAG = DataCollectorService.class.getSimpleName();
 
     private LocalDataFileRepository mLocalDataRepository;
@@ -101,7 +104,6 @@ public class DataCollectorService extends Service implements TimeSerieAnalyserOb
                     | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
             mRealTimeDataProcessorService = new RealTimeDataProcessorService(mDevicePairingService, mLocalDataRepository, intent.getExtras().getString("UserUUID"));
-            mRealTimeDataProcessorService.addMetricAnalyserObserver(this);
 
             mDataSyncService.initialize();
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
@@ -155,7 +157,6 @@ public class DataCollectorService extends Service implements TimeSerieAnalyserOb
         mDevicePairingService.close();
     }
 
-    @Override
     public void onNewState(MetricType metric, TimeSerieState state) {
         if(metric!=MetricType.HEART_BEAT){
             return;
@@ -194,5 +195,9 @@ public class DataCollectorService extends Service implements TimeSerieAnalyserOb
                 .setOngoing(true).build();
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onNewSensorState(TimeSerieEvent timeSerieEvent){
+        onNewState(timeSerieEvent.getType(), timeSerieEvent.getState());
+    }
 }
 

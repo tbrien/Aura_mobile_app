@@ -120,8 +120,4 @@ public class RealTimeDataProcessorService implements TimeSerieAnalyserObserver {
     public void onNewState(MetricType metric, TimeSerieState state) {
         EventBus.getDefault().post(TimeSerieEvent.builder().state(state).type(metric).build());
     }
-
-    public void addMetricAnalyserObserver(DataCollectorService dataCollectorService) {
-        rrIntervalAnalyser.addObserver(dataCollectorService);
-    }
 }
